@@ -65,25 +65,31 @@ plt.plot(random.rand(10))
 
 ### Why precompilation is important
 
-![Makie benchmark](figures/makie_pyplot.png)
-
-Personal goal: to unapologetically recommend Julia even for users with undemanding compute requirements. <!-- .element: class="fragment" data-fragment-index="1" -->
+![Makie benchmark](figures/makie_latency.svg)
 
 ---
 
-### Julia's compilation pipeline
+### What gets saved from Julia's compilation pipeline?
 
-![Source to lowered code](figures/source_lowered.svg)
-
-![Typeinference and code generation](figures/codeinstances.svg)
-
-<!-- .element: class="fragment" data-fragment-index="1" -->
+![Source to lowered code](figures/compilation_lower.svg)
 
 ---
 
-### Status of precompilation prior to Julia 1.8
+### What gets saved from Julia's compilation pipeline?
 
-![What we precompiled](figures/precompiled_1.5.svg)
+![Source to inferred code](figures/compilation_instance.svg)
+
+---
+
+### What gets saved from Julia's compilation pipeline?
+
+![Source to native code](figures/compilation_native.svg)
+
+---
+
+### What gets saved from Julia's compilation pipeline (Julia 1.0-1.7)?
+
+![Source to native code](figures/compilation_1.7.svg)
 
 ---
 
@@ -115,9 +121,9 @@ Fewer invalidations => more benefit from precompilation
 
 ---
 
-### Status of precompilation in Julia 1.8
+### What gets saved from Julia's compilation pipeline (Julia 1.8)?
 
-![What we precompile](figures/precompiled_1.8.svg)
+![precompile1.8](figures/compilation_1.8.svg)
 
 ---
 

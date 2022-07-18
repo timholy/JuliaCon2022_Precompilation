@@ -22,10 +22,11 @@ end
 
 fig, ax = plt.subplots()
 xrng, w = 1:length(pkgs), 0.4
-ax.bar(xrng, 100*count15/tot15; width=w, label="Julia 1.5")
-ax.bar(xrng .+ w, 100*count18/tot18; width=w, label="Julia 1.8")
+ax.bar(xrng, 100*count15/tot15; width=w, label="Julia 1.5", color="red")
+ax.bar(xrng .+ w, 100*count18/tot18; width=w, label="Julia 1.8", color="black")
 ax.set_xticks(xrng .+ w)
 ax.set_xticklabels(pkgs; rotation=90)
 ax.set_ylabel("Invalidations as % of system image")
 ax.legend()
 fig.tight_layout()
+fig.savefig("../figures/invalidation_fraction.svg")

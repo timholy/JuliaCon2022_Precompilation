@@ -7,14 +7,14 @@ groups = map(fn -> splitext(fn)[1], files)
 dfs = map(files) do fn
     DataFrame(CSV.File(fn; header=["package", "jisize", "load", "TTFX"]))
 end
-pkgs = dfs[1].package
-@assert dfs[2].package == pkgs
 
 # Sort the packages by TTFX on master
 p = sortperm(dfs[1].TTFX)
 dfs = map(dfs) do df
     df[p,:]
 end
+pkgs = dfs[1].package
+@assert dfs[2].package == pkgs
 
 # fig, axs = plt.subplots(3, 1)
 # labels = dfs[1].package

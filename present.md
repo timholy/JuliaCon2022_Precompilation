@@ -153,7 +153,7 @@ end
 ### Comparing Startup.jl vs PackageCompiler
 
 |           |  Startup.jl  |  PackageCompiler  |
-|:          |:------------:|:-----------------:|
+|:---------:|:------------:|:-----------------:|
 | Load time | **Poor** | **Good** |
 | Inferred code saved | Yes† | Yes |
 | Native code saved | **No** | **Yes** |

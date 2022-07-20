@@ -211,18 +211,56 @@ Julia has two independent systems for storing code in files:
 | Native code | **No** | **Yes** |
 | Usable for packages | **Yes** | **No** |
 
----
+          </script>
+        </section>
 
+        <section data-markdown
+                 data-transition="slide-in fade-out">
+          <script>
 ### What's needed to support packages in `staticdata.c`?
 
 Work has started: see PR#44527
 
-Missing "external linkage," the ability to link compiled code in one file against compiled code in a separate file.
+![The two code buckets](figures/code_buckets1.svg)
+          </script>
+        </section>
 
-![The two code buckets](figures/code_buckets.svg)
+        <section data-markdown
+                 data-transition="fade-in fade-out">
+          <script>
+### What's needed to support packages in `staticdata.c`?
 
----
+Work has started: see PR#44527
 
+![The two code buckets](figures/code_buckets2.svg)
+          </script>
+        </section>
+
+
+        <section data-markdown
+                 data-transition="fade-in fade-out">
+          <script>
+### What's needed to support packages in `staticdata.c`?
+
+Work has started: see PR#44527
+
+![The two code buckets](figures/code_buckets3.svg)
+          </script>
+        </section>
+
+        <section data-markdown
+                 data-transition="fade-in slide-out">
+          <script>
+### What's needed to support packages in `staticdata.c`?
+
+Work has started: see PR#44527
+
+![The two code buckets](figures/code_buckets4.svg)
+          </script>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
 ### Challenges
 
 - De-duplication: `PkgA.f(::Integer)` gets specialized as `f(::Int)` in *both* `PkgB` and `PkgC`, these two (identical) specializations must be merged.

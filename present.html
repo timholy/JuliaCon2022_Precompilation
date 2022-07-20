@@ -1,0 +1,314 @@
+<html>
+  <head>
+    <title>Improvements in package precompilation</title>
+
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/theme/white.css">
+    <link rel="stylesheet" href="mystyles.css">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h2>Improvements in package precompilation</h2>
+          <br>
+          <p style="text-align:center;font-size:40px;line-height:20px">Timothy E. Holy</p>
+          <p style="text-align:center;font-size:20px">Washington University in St. Louis</p>
+          <br>
+          <p style="text-align:center;font-size:40px;line-height:20px">Valentin Churavy</p>
+          <p style="text-align:center;font-size:20px">Massachusetts Institute of Technology</p>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
+### Julia runs fast
+
+![Microbenchmarks](figures/microbenchmarks.svg)
+
+---
+
+### You can write fast code quickly
+
+![Dask benchmark](figures/dask_slicing.png)
+
+- <!-- .element: class="fragment" data-fragment-index="1" --> Python `dask.array`: ~12,000 lines of code
+- <!-- .element: class="fragment" data-fragment-index="2" --> Julia: 18 lines of code
+
+---
+
+### But Julia has a major usability problem: latency, aka Time To First eXecution (TTFX)
+
+
+Julia:
+```julia
+using GLMakie
+plot(rand(10))
+```
+
+Python: <!-- .element: class="fragment" data-fragment-index="1" -->
+
+```python
+import matplotlib.pyplot as plt
+from numpy import random
+plt.plot(random.rand(10))
+```
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+---
+
+### The two halves of TTFX
+
+- package loading (a subject for a later day)
+- code compilation (our current target)
+
+---
+
+### Strategies to reduce compilation time
+
+- make the compiler faster
+- compile as little as needed (LLVM compile-on-demand) <!-- .element: class="fragment" data-fragment-index="1" -->
+- re-use the compiled code: better precompilation <!-- .element: class="fragment" data-fragment-index="2" -->
+
+---
+
+### Why precompilation is important
+
+![Makie benchmark](figures/makie_latency.svg)
+
+
+          </script>
+        </section>
+
+        <section data-markdown
+                 data-transition="slide-in fade-out">
+          <script>
+### What gets saved from Julia's compilation pipeline?
+
+![Source to lowered code](figures/compilation_lower.svg)
+          </script>
+        </section>
+        <section data-markdown
+                 data-transition="fade-in fade-out">
+          <script>
+### What gets saved from Julia's compilation pipeline?
+
+![Source to inferred code](figures/compilation_instance.svg)
+
+          </script>
+        </section>
+        <section data-markdown
+                 data-transition="fade-in fade-out">
+          <script>
+### What gets saved from Julia's compilation pipeline?
+
+![Source to native code](figures/compilation_native.svg)
+          </script>
+        </section>
+        <section data-markdown
+                 data-transition="fade-in slide-out">
+          <script>
+### What gets saved from Julia's compilation pipeline (Julia 1.0-1.7)?
+
+![Source to native code](figures/compilation_1.7.svg)
+          </script>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
+### Challenges to more comprehensive precompilation: invalidation
+
+Julia has to discard compiled code if it's no longer valid. How does this happen?
+
+```julia
+f(::Integer) = 1
+g(x) = f(x)
+g(1)         # compiles g(::Int) and f(::Int)
+```
+
+But now define <!-- .element: class="fragment" data-fragment-index="1" -->
+
+```julia
+f(::Int) = 2
+```
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+and the compiled code for <!-- .element: class="fragment" data-fragment-index="2" --> `g(::Int)` <!-- .element: class="fragment" data-fragment-index="2" --> has to be discarded (`f(::Int) from f(::Integer)` is no longer used).
+
+---
+
+### How common is invalidation?
+
+![Invalidation fraction](figures/invalidation_fraction.svg)
+
+<span style="font-weight:700;font-size:20px">
+Fewer invalidations => more benefit from precompilation
+</span>
+
+---
+
+### What gets saved from Julia's compilation pipeline (Julia 1.8)?
+
+![precompile1.8](figures/compilation_1.8.svg)
+
+---
+
+### Some benchmarks
+
+![1.8 benchmarks](figures/ttfx_benchmarks.svg)
+
+---
+
+### Custom precompilation: `Startup.jl`
+
+`~/.julia/config/startup.jl`:
+```julia
+using Startup
+```
+
+`~/.julia/dev/Startup/src/Startup.jl`: <!-- .element: class="fragment" data-fragment-index="1" -->
+
+```julia
+module Startup
+import Pkg1, Pkg2, Pkg3
+
+# force precompilation of `somefunction` and its dependents
+Pkg1.somefunction(rand(10))
+⋮
+end
+```
+<!-- .element: class="fragment" data-fragment-index="1" -->
+---
+
+### Comparing Startup.jl vs PackageCompiler
+
+<span style="font-size:80px">
+
+|           |  Startup.jl  |  PackageCompiler  |
+|:---------:|:------------:|:-----------------:|
+| Load time | **Poor** | **Good** |
+| Inferred code saved | Yes† | Yes |
+| Native code saved | **No** | **Yes** |
+| Works with Pkg updates | **Yes** | **No** |
+
+</span>
+<br>
+<br>
+
+<span style="font-size:20px">
+†Caveat: there's an exception for runtime dispatch (see SnoopCompile docs for details). Expected to be automatically fixable in Julia 1.9 and higher.
+</span>
+
+---
+
+### Looking ahead: saving native code in package precompilation
+
+Julia has two independent systems for storing code in files:
+
+|       | `dump.c` | `staticdata.c` |
+|:----- |:--------:|:--------------:|
+| Lowered code | Yes | Yes |
+| Type-inferred code | Yes | Yes |
+| Native code | **No** | **Yes** |
+| Usable for packages | **Yes** | **No** |
+
+---
+
+### What's needed to support packages in `staticdata.c`?
+
+Work has started: see PR#44527
+
+Missing "external linkage," the ability to link compiled code in one file against compiled code in a separate file.
+
+![The two code buckets](figures/code_buckets.svg)
+
+---
+
+### Challenges
+
+- De-duplication: `PkgA.f(::Integer)` gets specialized as `f(::Int)` in *both* `PkgB` and `PkgC`, these two (identical) specializations must be merged.
+- Invalidation: must check validity of compiled code upon loading <!-- .element: class="fragment" data-fragment-index="1" -->
+
+
+All this exists in <!-- .element: class="fragment" data-fragment-index="2" --> `dump.c`. <!-- .element: class="fragment" data-fragment-index="2" -->
+
+
+---
+
+### A common challenge
+
+Compiling Julia to native code is "easy", as long as you...
+
+- **Don't** use the Julia runtime (GC, exceptions, multi-threading, IO, ...)
+- **Don't** use global data
+- **Don't** have dynamic dispatch
+
+---
+
+### GPUCompiler.jl
+
+GPUCompiler.jl provides infrastructure to exfiltrate "near static" code.
+
+- CUDA.jl/AMDGPU.jl/... very limited runtime on device
+- Enzyme.jl: Compiling code within the same instance of Julia through a parallel JIT
+- StaticCompiler.jl: Originally limited runtime environment, now linking against libjulia.
+
+---
+
+### From `sysimage` to `pkgimage`
+
+Each `.ji` becomes a `.so`:
+
+1. Contains the metadata information for inserting methods into the method-table
+2. Precompiled code cache
+3. *New:* Object code cache
+
+Object code cache must be *relocatable*.
+
+---
+
+### Relocating code
+
+1. Global data is owned/rooted by the module in which it was declared
+2. Will be serialized into the corresponding `pkgimage`.
+3. Dependent compilation replaces references to these objects with relocation entries
+4. Relocation will be performed by the `pkgimage` loader in Julia.
+
+Implemented in PR#44527, **but** functions are unecessarily duplicated.
+
+---
+
+### Next steps
+
+1. During codegen detect that call target has already been compiled, and replace with relocation/trampoline.
+2. Automate the process and integrate into precompilation
+3. Enable package loading to `pkgimage`s
+4. (Speculative) Can we support `@ccallable`?
+
+---
+
+### A hopeful future
+
+Julia 1.8: less invalidation, more comprehensive precompilation than any prior Julia version
+
+On the horizon: comprehensive precompilation of native code <!-- .element: class="fragment" data-fragment-index="1" -->
+
+Not yet started: <!-- .element: class="fragment" data-fragment-index="2" -->
+
+- improvements in load times <!-- .element: class="fragment" data-fragment-index="2" -->
+- tools for streamlining the ecosystem (e.g., de-duplication across packages) <!-- .element: class="fragment" data-fragment-index="3" -->
+
+          </script>
+        </section>
+      </div>
+    </div>
+
+    <script src="node_modules/reveal.js/dist/reveal.js"></script>
+    <script src="node_modules/reveal.js/plugin/markdown/markdown.js"></script>
+    <script>
+      Reveal.initialize({
+          plugins: [ RevealMarkdown ],
+          center: false,
+      });
+    </script>
+  </body>
+</html>

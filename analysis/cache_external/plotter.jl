@@ -16,32 +16,32 @@ dfs = map(dfs) do df
     df[p,:]
 end
 
-fig, axs = plt.subplots(3, 1)
-labels = dfs[1].package
-x = 1:length(labels)
-w = 1/(length(dfs) + 1)
+# fig, axs = plt.subplots(3, 1)
+# labels = dfs[1].package
+# x = 1:length(labels)
+# w = 1/(length(dfs) + 1)
 
-ax = axs[1]
-barsz = [ax.bar(x .+ i*w, df.jisize/1024^2, w, label=groups[i]) for (i, df) in enumerate(dfs)]
-# ax.set_yscale("log", base=2)
-ax.set_ylabel("ji size (MB)")
-ax.set_xticks([])
+# ax = axs[1]
+# barsz = [ax.bar(x .+ i*w, df.jisize/1024^2, w, label=groups[i]) for (i, df) in enumerate(dfs)]
+# # ax.set_yscale("log", base=2)
+# ax.set_ylabel("ji size (MB)")
+# ax.set_xticks([])
 
-ax = axs[2]
-barl = [ax.bar(x .+ i*w, df.load, w, label=groups[i]) for (i, df) in enumerate(dfs)]
-# ax.set_yscale("log", base=2)
-ax.set_ylabel("load time (s)")
-ax.set_xticks([])
+# ax = axs[2]
+# barl = [ax.bar(x .+ i*w, df.load, w, label=groups[i]) for (i, df) in enumerate(dfs)]
+# # ax.set_yscale("log", base=2)
+# ax.set_ylabel("load time (s)")
+# ax.set_xticks([])
 
-ax = axs[3]
-bart = [ax.bar(x .+ i*w, df.TTFX, w, label=groups[i]) for (i, df) in enumerate(dfs)]
-# ax.set_yscale("log", base=2)
-ax.set_ylabel("TTFX (s)")
-ax.set_xticks(x .+ 3*w/2)
-ax.set_xticklabels(labels; rotation=90)
+# ax = axs[3]
+# bart = [ax.bar(x .+ i*w, df.TTFX, w, label=groups[i]) for (i, df) in enumerate(dfs)]
+# # ax.set_yscale("log", base=2)
+# ax.set_ylabel("TTFX (s)")
+# ax.set_xticks(x .+ 3*w/2)
+# ax.set_xticklabels(labels; rotation=90)
 
-plt.legend(barsz, groups)
-fig.tight_layout()
+# plt.legend(barsz, groups)
+# fig.tight_layout()
 
 # Plotting just load time and TTFX on the same axis
 cols = distinguishable_colors(length(pkgs), [colorant"white", colorant"black"]; dropseed=true)
@@ -68,4 +68,6 @@ ax.add_artist(legpkgs)
 lns = [plt.matplotlib.lines.Line2D([], [], color="black", label="load", marker="s", linestyle=nothing),
        plt.matplotlib.lines.Line2D([], [], color="black", label="TTFX", marker="o", linestyle=nothing)]
 legtask = ax.legend(; handles=lns, loc="lower right")
+ax.set_xlabel("Time (s), Julia-1.7")
+ax.set_ylabel("Time (s), Julia-1.8-rc3")
 fig.savefig("../../figures/ttfx_benchmarks.svg")

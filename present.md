@@ -129,7 +129,7 @@ Fewer invalidations => more benefit from precompilation
 
 ### Some benchmarks
 
-![1.8 benchmarks](figures/ttfx_benchmarks.png)
+![1.8 benchmarks](figures/ttfx_benchmarks.svg)
 
 ---
 
@@ -146,7 +146,7 @@ module Startup
 import Pkg1, Pkg2, Pkg3
 
 # force precompilation of `somefunction` and its dependents
-Pkg1.somefunction(rand(10))   
+Pkg1.somefunction(rand(10))
 ⋮
 end
 ```
@@ -213,7 +213,7 @@ GPUCompiler.jl provides infrastructure to exfiltrate "near static" code.
 
 - CUDA.jl/AMDGPU.jl/... very limited runtime on device
 - Enzyme.jl: Compiling code within the same instance of Julia through a parallel JIT
-- StaticCompiler.jl: Originally limited runtime environment, now linking against libjulia. 
+- StaticCompiler.jl: Originally limited runtime environment, now linking against libjulia.
 
 ---
 

@@ -144,7 +144,9 @@ using Startup
 ```julia
 module Startup
 import Pkg1, Pkg2, Pkg3
-Pkg1.somefunction(rand(10))    # force precompilation of `somefunction` and its dependents
+
+# force precompilation of `somefunction` and its dependents
+Pkg1.somefunction(rand(10))   
 ⋮
 end
 ```
@@ -195,9 +197,55 @@ All this exists in `dump.c`, it's mostly a question of migrating it to `staticda
 
 ---
 
-### Changes to the LLVM landscape
+### A common challenge
 
-(Slides from Val)
+Compiling Julia to native code is "easy", as long as you...
+
+- **Don't** use the Julia runtime (GC, exceptions, multi-threading, IO, ...)
+- **Don't** use global data
+- **Don't** have dynamic dispatch
+
+---
+
+### GPUCompiler.jl
+
+GPUCompiler.jl provides infrastructure to exfiltrate "near static" code.
+
+- CUDA.jl/AMDGPU.jl/... very limited runtime on device
+- Enzyme.jl: Compiling code within the same instance of Julia through a parallel JIT
+- StaticCompiler.jl: Originally limited runtime environment, now linking against libjulia. 
+
+---
+
+### From `sysimage` to `pkgimage`
+
+Each `.ji` becomes a `.so`:
+
+1. Contains the metadata information for inserting methods into the method-table
+2. Precompiled code cache
+3. *New:* Object code cache
+
+Object code cache must be *relocatable*.
+
+---
+
+### Relocating code
+
+1. Global data is owned/rooted by the module in which it was declared
+2. Will be serialized into the corresponding `pkgimage`.
+3. Dependent compilation replaces references to these objects with relocation entries
+4. Relocation will be performed by the `pkgimage` loader in Julia.
+
+Implemented in PR#44527, **but** functions are unecessarily duplicated.
+
+---
+
+### Next steps
+
+1. During codegen detect that call target has already been compiled, and replace with relocation/trampoline.
+2. Automate the process and integrate into precompilation
+3. Enable package loading to `pkgimage`s
+4. (Speculative) Can we support `@ccallable`?
 
 ---
 

@@ -51,6 +51,7 @@ Python: <!-- .element: class="fragment" data-fragment-index="1" -->
 import matplotlib.pyplot as plt
 from numpy import random
 plt.plot(random.rand(10))
+plt.show()
 ```
 <!-- .element: class="fragment" data-fragment-index="1" -->
 
@@ -150,14 +151,41 @@ Fewer invalidations => more benefit from precompilation
 
 ![precompile1.8](figures/compilation_1.8.svg)
 
----
+          </script>
+        </section>
 
+        <section data-markdown
+                 data-transition="slide-in fade-out">
+          <script>
 ### Some benchmarks
 
 ![1.8 benchmarks](figures/ttfx_benchmarks.svg)
 
----
+          </script>
+        </section>
 
+        <section data-markdown
+                 data-transition="fade-in fade-out">
+          <script>
+### Some benchmarks
+
+![1.8 benchmarks](figures/ttfx_benchmarks2.svg)
+
+          </script>
+        </section>
+
+        <section data-markdown
+                 data-transition="fade-in slide-out">
+          <script>
+### Some benchmarks
+
+![1.8 benchmarks](figures/ttfx_benchmarks3.svg)
+
+          </script>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
 ### Custom precompilation: `Startup.jl`
 
 `~/.julia/config/startup.jl`:
@@ -177,26 +205,20 @@ Pkg1.somefunction(rand(10))
 end
 ```
 <!-- .element: class="fragment" data-fragment-index="1" -->
+
+
+New package: <!-- .element: class="fragment" data-fragment-index="2" --> `SnoopPrecompile.jl` <!-- .element: class="fragment" data-fragment-index="2" -->
 ---
 
 ### Comparing Startup.jl vs PackageCompiler
 
-<span style="font-size:80px">
-
 |           |  Startup.jl  |  PackageCompiler  |
 |:---------:|:------------:|:-----------------:|
 | Load time | **Poor** | **Good** |
-| Inferred code saved | Yes† | Yes |
+| Inferred code saved | Yes | Yes |
 | Native code saved | **No** | **Yes** |
 | Works with Pkg updates | **Yes** | **No** |
-
-</span>
-<br>
-<br>
-
-<span style="font-size:20px">
-†Caveat: there's an exception for runtime dispatch (see SnoopCompile docs for details). Expected to be automatically fixable in Julia 1.9 and higher.
-</span>
+<!-- .element.table: style="font-size:100%;" -->
 
 ---
 
@@ -210,6 +232,7 @@ Julia has two independent systems for storing code in files:
 | Type-inferred code | Yes | Yes |
 | Native code | **No** | **Yes** |
 | Usable for packages | **Yes** | **No** |
+<!-- .element.table: style="font-size:100%;" -->
 
           </script>
         </section>
@@ -312,6 +335,12 @@ Object code cache must be *relocatable*.
 4. Relocation will be performed by the `pkgimage` loader in Julia.
 
 Implemented in PR#44527, **but** functions are unecessarily duplicated.
+
+---
+
+### Relocation is implementing save & load for the arrows
+
+![The two code buckets](figures/code_buckets4.svg)
 
 ---
 

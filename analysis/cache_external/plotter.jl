@@ -71,3 +71,15 @@ legtask = ax.legend(; handles=lns, loc="lower right")
 ax.set_xlabel("Time (s), Julia-1.7")
 ax.set_ylabel("Time (s), Julia-1.8-rc3")
 fig.savefig("../../figures/ttfx_benchmarks.svg")
+
+# Add annotations that show how cool we are
+i = findfirst(==("GLMakie"), pkgs)
+x, y = dfs[1].TTFX[i], dfs[2].TTFX[i]
+ax.arrow(x, x, zero(x), 0.8*(y-x); color="black", width=0.02x)# length_includes_head=true)
+ax.text(0.99*x, y/1.15, "51s → 29s"; horizontalalignment="right")
+fig.savefig("../../figures/ttfx_benchmarks2.svg")
+
+x, y = dfs[1].load[i], dfs[2].load[i]
+ax.arrow(x, x, zero(x), 0.8*(y-x); color="black", width=0.02x)# length_includes_head=true)
+ax.text(0.99*x, y*1.10, "8s → 9s"; horizontalalignment="right")
+fig.savefig("../../figures/ttfx_benchmarks3.svg")

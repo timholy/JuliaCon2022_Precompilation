@@ -5,9 +5,8 @@
 # - for each julia executable you want to test, pick an output file name and execute run_workload
 using Pkg
 
-# const default_pkgs = String["CSV", "DataFrames", "Revise", "Plots", "GLMakie", "LoopVectorization", "OrdinaryDiffEq", "ModelingToolkit", "Flux", "JuMP", "ImageFiltering"]
-# Plots and Revise give errors/warnings, skip for now
-const default_pkgs = String["CSV", "DataFrames", "GLMakie", "LV", "OrdinaryDiffEq", "ModelingToolkit", "Flux", "JuMP", "ImageFiltering"]
+# const default_pkgs = String["CSV", "DataFrames", "Revise", "Plots", "GLMakie", "LV", "OrdinaryDiffEq", "ModelingToolkit", "Flux", "JuMP", "ImageFiltering"]
+const default_pkgs = String["CSV", "DataFrames", "Revise", "GLMakie", "LV", "OrdinaryDiffEq", "ModelingToolkit", "JuMP", "ImageFiltering"]
 const default_deps = Dict("JuMP" => ["GLPK"], "DataFrames" => ["PooledArrays"], "Plots" => ["GR"], "ModelingToolkit" => ["OrdinaryDiffEq"])
 const default_workloads = Dict(
     "CSV" => ("", """CSV.File(joinpath(pkgdir(CSV), "test", "testfiles", "precompile.csv"))"""),
@@ -253,7 +252,7 @@ function run_workload(output, juliacmd, ver, depot_path, #=runner_dirs,=# pkgs =
                     using $pkg
                     @precompile_setup begin
                         $setup
-                        @precompile_all begin
+                        @precompile_all_calls begin
                             $wl
                         end
                     end
@@ -268,6 +267,7 @@ function run_workload(output, juliacmd, ver, depot_path, #=runner_dirs,=# pkgs =
                 Pkg.activate("$startuppkg");
                 $pw
                 Pkg.instantiate()
+                Pkg.precompile()
                 using Startup
                 """
                 println("\nPrecompilation:\n", work)
@@ -280,6 +280,7 @@ function run_workload(output, juliacmd, ver, depot_path, #=runner_dirs,=# pkgs =
                 empty!(DEPOT_PATH);
                 pushfirst!(DEPOT_PATH, "$depot_path");
                 Pkg.activate("$startuppkg");
+                Pkg.precompile()
                 tstart = time(); using Startup, $usinglist; tload = time() - tstart
                 $setup
                 tstart = time(); $wl; trun = time() - tstart

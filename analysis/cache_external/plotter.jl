@@ -1,8 +1,9 @@
 using PyPlot: PyPlot, plt
 using DataFrames, CSV
 using Colors
+using ImageBase # (minimum|maximum)_finite
 
-files = ("julia-1.7.0.csv", "julia-1.8rc3.csv")
+files = ("julia-1.7.3.csv", "julia-1.10.csv")
 groups = map(fn -> splitext(fn)[1], files)
 dfs = map(files) do fn
     DataFrame(CSV.File(fn; header=["package", "jisize", "load", "TTFX"]))
@@ -55,8 +56,8 @@ sc = plt.matplotlib.scale.LogScale(ax; base=2)
 ax.set_xscale(sc)
 ax.set_yscale(sc)
 tmats = (dfs[1][:,[:load,:TTFX]] |> Matrix, dfs[2][:,[:load,:TTFX]] |> Matrix)
-trange = (min(minimum(tmats[1]), minimum(tmats[2])),
-          max(maximum(tmats[1]), maximum(tmats[2])))
+trange = (min(minimum_finite(tmats[1]), minimum_finite(tmats[2])),
+          max(maximum_finite(tmats[1]), maximum_finite(tmats[2])))
 tlim = (2^(floor(log2(trange[1]))), 2^(ceil(log2(trange[2]))))
 ax.set_xlim(tlim)
 ax.set_ylim(tlim)
@@ -69,7 +70,7 @@ lns = [plt.matplotlib.lines.Line2D([], [], color="black", label="load", marker="
        plt.matplotlib.lines.Line2D([], [], color="black", label="TTFX", marker="o", linestyle=nothing)]
 legtask = ax.legend(; handles=lns, loc="lower right")
 ax.set_xlabel("Time (s), Julia-1.7")
-ax.set_ylabel("Time (s), Julia-1.8-rc3")
+ax.set_ylabel("Time (s), Julia-1.10")
 fig.savefig("../../figures/ttfx_benchmarks.svg")
 
 # Add annotations that show how cool we are

@@ -1,5 +1,6 @@
 # Workflow:
-# - pick a depot location
+# - pick a depot location & initialize it
+# - `dev Example` in the depot, add `src/Example1.jl` (revised version) and `src/Example0.jl` (original version) if you're testing Revise
 # - run create_package_folders (best to do this on the same major/minor Julia version you plan to test on, so the Manifests get resolved appropriately)
 # - manually edit the devved pkgs in the depot to ensure they precompile the given workload
 # - for each julia executable you want to test, pick an output file name and execute run_workload
@@ -134,34 +135,10 @@ const post_work = Dict(
     """
 )
 
-# """
-#     runner_dirs = create_package_folders(depot_path)
-# """
-# function create_package_folders(depot_path, pkgs = default_pkgs; deps = default_deps)
-#     mkpath(depot_path)
-#     olddepot = copy(DEPOT_PATH)
-#     empty!(DEPOT_PATH)
-#     try
-#         pushfirst!(DEPOT_PATH, depot_path)
-#         for pkg in pkgs
-#             p = mkpath(joinpath(depot_path, "runner_dirs", pkg))
-#             Pkg.activate(p)
-#             try
-#                 Pkg.develop(pkg)
-#                 for dep in get(deps, pkg, String[])
-#                     pkg == "Revise" ? Pkg.develop(dep) : Pkg.add(dep)
-#                 end
-#             catch
-#             end
-#         end
-#     finally
-#         empty!(DEPOT_PATH)
-#         append!(DEPOT_PATH, olddepot)
-#     end
-#     return joinpath(depot_path, "runner_dirs")
-# end
-
-function run_workload(output, juliacmd, ver, depot_path, #=runner_dirs,=# pkgs = default_pkgs; clear_output::Bool=true, clear_compiled::Bool=true)
+function run_workload(output, pkgs = default_pkgs; clear_output::Bool=true, clear_compiled::Bool=true)
+    depot_path = first(DEPOT_PATH)
+    v = Base.VERSION
+    ver = "v$(v.major).$(v.minor)"
     clear_compiled && rm(joinpath(depot_path, "compiled", ver); force=true, recursive=true)
     if clear_output
         rm(output; force=true)
@@ -271,7 +248,7 @@ function run_workload(output, juliacmd, ver, depot_path, #=runner_dirs,=# pkgs =
                 using Startup
                 """
                 println("\nPrecompilation:\n", work)
-                run(`$juliacmd --startup=no -e $work`)  # precompiles Startup.jl
+                run(`$(Base.julia_cmd()) --startup=no -e $work`)  # precompiles Startup.jl
                 return join(pkglist, ',')
             end
             work =
@@ -286,11 +263,17 @@ function run_workload(output, juliacmd, ver, depot_path, #=runner_dirs,=# pkgs =
                 tstart = time(); $wl; trun = time() - tstart
                 id = Base.identify_package("$pkg");
                 origin = Base.pkgorigins[id];
+                if !isfile("$output")
+                    open("$output", "w") do io
+                        println(io, "# ", VERSION)
+                        println(io, "package,filesize,TTL,TTFX")
+                    end
+                end
                 open("$output", "a") do io
                     println(io, $pkg, ",", stat(origin.cachepath).size, ",", tload, ",", trun)
                 end
                 """
-            run(`$juliacmd --startup=no -e $work`)
+            run(`$(Base.julia_cmd()) --startup=no -e $work`)
             if haskey(post_work, pkg)
                 wl = post_work[pkg]
                 cleanup =
@@ -301,7 +284,7 @@ function run_workload(output, juliacmd, ver, depot_path, #=runner_dirs,=# pkgs =
                     Pkg.activate("$startuppkg");
                     $wl
                     """
-                run(`$juliacmd --startup=no -e $cleanup`)
+                run(`$(Base.julia_cmd()) --startup=no -e $cleanup`)
             end
         # catch
         # end

@@ -6,6 +6,9 @@
 # - for each julia executable you want to test, pick an output file name and execute run_workload
 using Pkg
 
+const home = ENV["HOME"]
+const depot = dirname(dirname(dirname(Base.active_project())))
+
 # const default_pkgs = String["CSV", "DataFrames", "Revise", "Plots", "GLMakie", "LV", "OrdinaryDiffEq", "ModelingToolkit", "Flux", "JuMP", "ImageFiltering"]
 const default_pkgs = String["CSV", "DataFrames", "Revise", "GLMakie", "LV", "OrdinaryDiffEq", "ModelingToolkit", "JuMP", "ImageFiltering"]
 const default_deps = Dict("JuMP" => ["GLPK"], "DataFrames" => ["PooledArrays"], "Plots" => ["GR"], "ModelingToolkit" => ["OrdinaryDiffEq"])
@@ -116,7 +119,7 @@ const default_workloads = Dict(
 )
 
 const dev_paths = Dict(
-    "Revise" => "/home/tim/.julia/dev/Example",
+    "Revise" => "$depot/dev/Example",
 )
 
 const env_settings = Dict(
@@ -200,7 +203,7 @@ function run_workload(output, pkgs = default_pkgs; clear_output::Bool=true, clea
                 pkglist = String[pkg]
                 Pkg.generate("Startup")
                 Pkg.activate("Startup")
-                Pkg.develop(path="/home/tim/.julia/dev/SnoopCompile/SnoopPrecompile")
+                Pkg.develop(path="$home/.julia/dev/SnoopCompile/SnoopPrecompile")
                 pwlist = get(env_settings, pkg, ())
                 pw = ""
                 for (key, val) in pwlist

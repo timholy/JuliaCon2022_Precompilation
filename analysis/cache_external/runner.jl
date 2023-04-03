@@ -203,7 +203,7 @@ function run_workload(output, pkgs = default_pkgs; clear_output::Bool=true, clea
                 pkglist = String[pkg]
                 Pkg.generate("Startup")
                 Pkg.activate("Startup")
-                Pkg.develop(path="$home/.julia/dev/SnoopCompile/SnoopPrecompile")
+                Pkg.add("SnoopPrecompile")   # path="$home/.julia/dev/SnoopCompile/SnoopPrecompile")
                 pwlist = get(env_settings, pkg, ())
                 pw = ""
                 for (key, val) in pwlist
@@ -272,8 +272,12 @@ function run_workload(output, pkgs = default_pkgs; clear_output::Bool=true, clea
                         println(io, "package,filesize,TTL,TTFX")
                     end
                 end
+                sz = stat(origin.cachepath).size
+                if isdefined(Base, :ocachefile_from_cachefile)
+                    sz += stat(Base.ocachefile_from_cachefile(origin.cachepath)).size
+                end
                 open("$output", "a") do io
-                    println(io, $pkg, ",", stat(origin.cachepath).size, ",", tload, ",", trun)
+                    println(io, $pkg, ",", sz, ",", tload, ",", trun)
                 end
                 """
             run(`$(Base.julia_cmd()) --startup=no -e $work`)

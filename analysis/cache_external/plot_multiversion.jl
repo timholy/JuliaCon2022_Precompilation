@@ -5,10 +5,18 @@ using DataFrames
 using Colors
 
 colors = Makie.wong_colors()
+function get_version_number(filename)
+    m = match(r"julia-(\d+\.\d+\.\d+)[\.-]", filename)
+    if m === nothing
+        return nothing
+    end
+    return VersionNumber(m.captures[1])
+end
 
-datafiles = filter!(readdir(@__DIR__; join=true)) do name
+datafiles = filter!(readdir(@__DIR__)) do name
     endswith(name, ".csv")
 end
+sort!(datafiles; by=get_version_number)
 dfs = [DataFrame(CSV.File(filename; comment="#", header=2)) for filename in datafiles]
 vers = [strip(replace(first(readlines(filename)), "#"=>"")) for filename in datafiles]
 
@@ -45,23 +53,29 @@ for ysc in ("linear", "log10")
 
     # Also as line plots
     fig = Figure(resolution=(800, 400))
-    axttl = Axis(fig[1,1]; title="TTL", xticks=(1:length(vers), vers), yscale=yscsym, limits=(nothing, (ylimmin, ylimmax)))
+    axttl = Axis(fig[1,1]; title="TTL", xticks=(1:length(vers), vers), yscale=yscsym, xticklabelrotation=π/2, limits=(nothing, (ylimmin, ylimmax)))
     ttl = hcat([df.TTL for df in dfs]...)
     x = 1:length(vers)
     for i in axes(ttl, 1)
         lines!(axttl, x, ttl[i,:]; label=pkgs[i], color=pkgcolors[i])
     end
 
-    axttfx = Axis(fig[1,2]; title="TTFX", xticks=(1:length(vers), vers), yscale=yscsym, limits=(nothing, (ylimmin, ylimmax)))
+    axttfx = Axis(fig[1,2]; title="TTFX", xticks=(1:length(vers), vers), yscale=yscsym, xticklabelrotation=π/2, limits=(nothing, (ylimmin, ylimmax)))
     ttfx = hcat([df.TTFX for df in dfs]...)
     x = 1:length(vers)
     for i in axes(ttfx, 1)
         lines!(axttfx, x, ttfx[i,:]; label=pkgs[i], color=pkgcolors[i])
     end
 
-    Legend(fig[1,3], axttfx)
+    axsz = Axis(fig[1,3]; title="Cache file(s) size, MB", xticks=(1:length(vers), vers), yscale=yscsym, xticklabelrotation=π/2)
+    fsz = hcat([df.filesize/1024^2 for df in dfs]...)
+    x = 1:length(vers)
+    for i in axes(fsz, 1)
+        lines!(axsz, x, fsz[i,:]; label=pkgs[i], color=pkgcolors[i])
+    end
+
+    Legend(fig[1,4], axttfx)
 
     save("TTL_TTFX_jver_$ysc.pdf", fig)
     save("TTL_TTFX_jver_$ysc.png", fig, px_per_unit=2)
 end
-

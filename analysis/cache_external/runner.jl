@@ -203,7 +203,7 @@ function run_workload(output, pkgs = default_pkgs; clear_output::Bool=true, clea
                 pkglist = String[pkg]
                 Pkg.generate("Startup")
                 Pkg.activate("Startup")
-                Pkg.add("SnoopPrecompile")   # path="$home/.julia/dev/SnoopCompile/SnoopPrecompile")
+                Pkg.add("PrecompileTools")
                 pwlist = get(env_settings, pkg, ())
                 pw = ""
                 for (key, val) in pwlist
@@ -228,11 +228,11 @@ function run_workload(output, pkgs = default_pkgs; clear_output::Bool=true, clea
                 open("Startup/src/Startup.jl", "w") do io
                     println(io, """
                     module Startup
-                    using SnoopPrecompile
-                    using $pkg
-                    @precompile_setup begin
+                    using PrecompileTools
+                    @recompile_invalidations using $pkg
+                    @setup_workload begin
                         $setup
-                        @precompile_all_calls begin
+                        @compile_workload begin
                             $wl
                         end
                     end

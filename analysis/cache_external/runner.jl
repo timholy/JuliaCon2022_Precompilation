@@ -203,7 +203,7 @@ function run_workload(output, pkgs = default_pkgs; clear_output::Bool=true, clea
                 pkglist = String[pkg]
                 Pkg.generate("Startup")
                 Pkg.activate("Startup")
-                Pkg.add("PrecompileTools")
+                Pkg.develop(PackageSpec(path="/home/tim/.julia/dev/PrecompileTools"))
                 pwlist = get(env_settings, pkg, ())
                 pw = ""
                 for (key, val) in pwlist

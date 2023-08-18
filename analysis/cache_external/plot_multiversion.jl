@@ -5,6 +5,7 @@ using DataFrames
 using Colors
 
 colors = Makie.wong_colors()
+
 function get_version_number(filename)
     m = match(r"julia-(\d+\.\d+\.\d+)[\.-]", filename)
     if m === nothing
@@ -17,6 +18,9 @@ datafiles = filter!(readdir(@__DIR__)) do name
     endswith(name, ".csv")
 end
 sort!(datafiles; by=get_version_number)
+# filter!(datafiles) do filename
+#     get_version_number(filename) < v"1.10"
+# end
 dfs = [DataFrame(CSV.File(filename; comment="#", header=2)) for filename in datafiles]
 vers = [strip(replace(first(readlines(filename)), "#"=>"")) for filename in datafiles]
 
@@ -31,7 +35,7 @@ for ysc in ("linear", "log10")
     ylimmin = ysc == "linear" ? 0 : 0.01
     ylimmax = ysc == "linear" ? maxtime : 10.0^(ceil(log10(maxtime)))
     fig = Figure(resolution=(800, 400))
-    axttl = Axis(fig[1,1]; title="TTL", xticks=(1:length(pkgs), pkgs), xticklabelrotation=π/2, yscale=yscsym)
+    axttl = Axis(fig[1,1]; title="TTL", ylabel="Time (s)", xticks=(1:length(pkgs), pkgs), xticklabelrotation=π/2, yscale=yscsym)
     ttl = vcat([df.TTL for df in dfs]...)
     grp = vcat([fill(i, length(pkgs)) for i in eachindex(dfs)]...)
     x = vcat([1:length(pkgs) for _ in eachindex(dfs)]...)
@@ -53,7 +57,7 @@ for ysc in ("linear", "log10")
 
     # Also as line plots
     fig = Figure(resolution=(800, 400))
-    axttl = Axis(fig[1,1]; title="TTL", xticks=(1:length(vers), vers), yscale=yscsym, xticklabelrotation=π/2, limits=(nothing, (ylimmin, ylimmax)))
+    axttl = Axis(fig[1,1]; title="TTL", ylabel="Time (s)", xticks=(1:length(vers), vers), yscale=yscsym, xticklabelrotation=π/2, limits=(nothing, (ylimmin, ylimmax)))
     ttl = hcat([df.TTL for df in dfs]...)
     x = 1:length(vers)
     for i in axes(ttl, 1)
@@ -67,7 +71,7 @@ for ysc in ("linear", "log10")
         lines!(axttfx, x, ttfx[i,:]; label=pkgs[i], color=pkgcolors[i])
     end
 
-    axsz = Axis(fig[1,3]; title="Cache file(s) size, MB", xticks=(1:length(vers), vers), yscale=yscsym, xticklabelrotation=π/2)
+    axsz = Axis(fig[1,3]; title="Cache file(s) size", ylabel="Size in MB", xticks=(1:length(vers), vers), yscale=yscsym, xticklabelrotation=π/2)
     fsz = hcat([df.filesize/1024^2 for df in dfs]...)
     x = 1:length(vers)
     for i in axes(fsz, 1)
